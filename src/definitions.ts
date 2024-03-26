@@ -271,6 +271,11 @@ export interface ScanResult {
   rawAdvertisement?: DataView;
 }
 
+export interface SetCustomConfigOptions {
+  authToken: string;
+  url: string;
+}
+
 export interface BluetoothLePlugin {
   initialize(options?: InitializeOptions): Promise<void>;
   isEnabled(): Promise<BooleanResult>;
@@ -308,4 +313,5 @@ export interface BluetoothLePlugin {
   writeDescriptor(options: WriteDescriptorOptions & TimeoutOptions): Promise<void>;
   startNotifications(options: ReadOptions): Promise<void>;
   stopNotifications(options: ReadOptions): Promise<void>;
+  setCustomConfig(options: SetCustomConfigOptions): Promise<void>;
 }

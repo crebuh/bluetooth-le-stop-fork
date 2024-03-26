@@ -38,6 +38,8 @@ import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.getcapacitor.annotation.Permission
 import com.getcapacitor.annotation.PermissionCallback
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.UUID
 
 
@@ -95,6 +97,11 @@ class BluetoothLe : Plugin() {
     private var deviceScanner: DeviceScanner? = null
     private var displayStrings: DisplayStrings? = null
     private var aliases: Array<String> = arrayOf()
+
+    // Custom config
+    private var authToken: String? = null
+    private var url: String? = null
+    private var preventEmergencyNotification = false
 
     override fun load() {
         displayStrings = getDisplayStrings()
@@ -736,6 +743,15 @@ class BluetoothLe : Plugin() {
             run {
                 val key =
                     "notification|${device.getId()}|${(characteristic.first)}|${(characteristic.second)}"
+                if (!preventEmergencyNotification && response.value?.trim() == "5A 01 01 00 00 00 00 3F") {
+                    try {
+                        preventEmergencyNotification = true
+                        handleEmergencyNotification();
+                    } catch (e: Exception) {
+                        preventEmergencyNotification = false
+                        Logger.error(TAG, "Error in handleEmergencyNotification: ${e.localizedMessage}", e)
+                    }
+                }
                 val ret = JSObject()
                 ret.put("value", response.value)
                 try {
@@ -757,6 +773,7 @@ class BluetoothLe : Plugin() {
 
     @PluginMethod
     fun stopNotifications(call: PluginCall) {
+        preventEmergencyNotification = false
         val device = getDevice(call) ?: return
         val characteristic = getCharacteristic(call) ?: return
         device.setNotifications(
@@ -770,6 +787,13 @@ class BluetoothLe : Plugin() {
                 }
             }
         }
+    }
+
+    @PluginMethod
+    fun setCustomConfig(call: PluginCall) {
+        authToken = call.getString("authToken", null)
+        url = call.getString("url", null)
+        call.resolve()
     }
 
     private fun assertBluetoothAdapter(call: PluginCall): Boolean? {
@@ -981,5 +1005,18 @@ class BluetoothLe : Plugin() {
             return null
         }
         return Triple(characteristic.first, characteristic.second, descriptorUUID)
+    }
+
+    private fun handleEmergencyNotification() {
+        if (authToken == null || url == null) {
+            return
+        }
+        // Send http put request to the server using HttpURLConnection
+        val url = URL(url)
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "PUT"
+        connection.setRequestProperty("Authorization", authToken)
+        val responseCode = connection.responseCode
+        Logger.debug(TAG, "Response code: $responseCode")
     }
 }

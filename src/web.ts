@@ -25,6 +25,7 @@ import type {
   WriteDescriptorOptions,
   GetMtuResult,
   RequestConnectionPriorityOptions,
+  SetCustomConfigOptions,
 } from './definitions';
 import { runWithTimeout } from './timeout';
 
@@ -355,6 +356,10 @@ export class BluetoothLeWeb extends WebPlugin implements BluetoothLePlugin {
   async stopNotifications(options: ReadOptions): Promise<void> {
     const characteristic = await this.getCharacteristic(options);
     await characteristic?.stopNotifications();
+  }
+  
+  async setCustomConfig(_options: SetCustomConfigOptions): Promise<void> {
+    throw this.unavailable('setCustomConfig is not available on web.');
   }
 
   private getFilters(options?: RequestBleDeviceOptions): BluetoothLEScanFilter[] {
