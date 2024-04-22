@@ -743,15 +743,6 @@ class BluetoothLe : Plugin() {
             run {
                 val key =
                     "notification|${device.getId()}|${(characteristic.first)}|${(characteristic.second)}"
-                if (!preventEmergencyNotification && response.value?.trim() == "5A 01 01 00 00 00 00 3F") {
-                    try {
-                        preventEmergencyNotification = true
-                        handleEmergencyNotification();
-                    } catch (e: Exception) {
-                        preventEmergencyNotification = false
-                        Logger.error(TAG, "Error in handleEmergencyNotification: ${e.localizedMessage}", e)
-                    }
-                }
                 val ret = JSObject()
                 ret.put("value", response.value)
                 try {
